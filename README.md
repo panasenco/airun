@@ -40,6 +40,12 @@ Note that activating GPU instances on Infomaniak can take about a week.
 ## Deployment
 
 Run the following command:
-```bash
+```sh
 openstack --os-cloud airun stack create -t heat/stack.yml --parameter instance_exists=true airun_stack
 ```
+
+To SSH into the instance:
+```sh
+ssh -i ~/.ssh/id_airun debian@$(openstack --os-cloud airun stack output show --format value --column output_value airun_stack airun_instance_ip)
+```
+

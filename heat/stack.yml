@@ -33,6 +33,17 @@ conditions:
     get_param: instance_exists
 
 resources:
+  airun_security_group:
+    type: OS::Neutron::SecurityGroup
+    properties:
+      name: airun-security-group
+      description: Security group for the airun instance - allows SSH ingress.
+      rules:
+        - protocol: tcp
+          port_range_min: 22
+          port_range_max: 22
+          remote_ip_prefix: 0.0.0.0/0
+
   airun_instance:
     type: OS::Nova::Server
     condition: instance_exists
@@ -46,3 +57,14 @@ resources:
         get_param: instance_flavor
       networks:
         - network: "ext-net1"
+      security_groups:
+        - get_resource: airun_security_group
+
+outputs:
+  airun_instance_ip:
+    description: IPv4 address of the airun instance
+    value:
+      get_attr:
+        - airun_instance
+        - first_address
+
