@@ -16,6 +16,13 @@ parameters:
     constraints:
     - allowed_pattern: "[a-zA-Z0-9-]+"
     default: "airun-instance"
+  instance_image:
+    type: string
+    label: Instance image
+    description: OpenStack VM image to use to launch the instance
+    constraints:
+    - allowed_pattern: "[a-zA-Z0-9- ]+"
+    default: "NixOS"
   instance_flavor:
     type: string
     label: Instance flavor
@@ -52,7 +59,8 @@ resources:
         get_param: instance_name
       key_name:
         get_param: key_name
-      image: "Debian 13 trixie"
+      image:
+        get_param: instance_image
       flavor:
         get_param: instance_flavor
       networks:

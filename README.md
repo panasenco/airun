@@ -37,6 +37,22 @@ Note that activating GPU instances on Infomaniak can take about a week.
     openstack --os-cloud airun keypair create --public-key ~/.ssh/id_airun.pub airun_key
     ```
 
+
+## Building the image
+
+### NixOS
+Run the following command to build a generic OpenStack qcow2 image:
+```
+nix-build '<nixpkgs/nixos>' -A config.system.build.openstackImage --arg configuration "{ imports = [ <nixpkgs/nixos/maintainers/scripts/openstack/openstack-image.nix> ]; }"
+```
+
+### Uploading the image
+```
+openstack --os-cloud airun image create "NixOS" --container-format bare  --disk-format raw --file result/*.qcow2
+```
+Confirm the image's creation with `openstack --os-cloud airun image list`.
+
+
 ## Deployment
 
 Run the following command:
