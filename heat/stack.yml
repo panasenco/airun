@@ -67,6 +67,9 @@ resources:
         - network: "ext-net1"
       security_groups:
         - get_resource: airun_security_group
+      user_data_format: RAW
+      user_data:
+        get_file: configuration.nix
 
 outputs:
   airun_instance_ip:

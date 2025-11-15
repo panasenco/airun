@@ -48,7 +48,7 @@ nix-build '<nixpkgs/nixos>' -A config.system.build.openstackImage --arg configur
 
 ### Uploading the image
 ```
-openstack --os-cloud airun image create "NixOS" --container-format bare  --disk-format raw --file result/*.qcow2
+openstack --os-cloud airun image create "NixOS" --container-format bare --disk-format qcow2 --file result/*.qcow2
 ```
 Confirm the image's creation with `openstack --os-cloud airun image list`.
 
