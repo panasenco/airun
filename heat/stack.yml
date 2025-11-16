@@ -22,7 +22,7 @@ parameters:
     description: OpenStack VM image to use to launch the instance
     constraints:
     - allowed_pattern: "[a-zA-Z0-9- ]+"
-    default: "NixOS"
+    default: "airun-image"
   instance_flavor:
     type: string
     label: Instance flavor
@@ -67,9 +67,6 @@ resources:
         - network: "ext-net1"
       security_groups:
         - get_resource: airun_security_group
-      user_data_format: RAW
-      user_data:
-        get_file: configuration.nix
 
 outputs:
   airun_instance_ip:

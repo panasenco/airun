@@ -43,23 +43,36 @@ Note that activating GPU instances on Infomaniak can take about a week.
 ### NixOS
 Run the following command to build a generic OpenStack qcow2 image:
 ```
-nix-build '<nixpkgs/nixos>' -A config.system.build.openstackImage --arg configuration "{ imports = [ <nixpkgs/nixos/maintainers/scripts/openstack/openstack-image.nix> ]; }"
+nix-build '<nixpkgs/nixos>' -A config.system.build.image --arg configuration "{ imports = [ ./nix/build.nix ]; }" 
 ```
 
 ### Uploading the image
 ```
-openstack --os-cloud airun image create "NixOS" --container-format bare --disk-format qcow2 --file result/*.qcow2
+openstack --os-cloud airun image create airun-image --container-format bare --disk-format qcow2 --file result/*.qcow2
 ```
-Confirm the image's creation with `openstack --os-cloud airun image list`.
+Confirm the image's creation with `openstack --os-cloud airun image list --name airun-image`.
+
+### Reuploading the image
+To upload the image again, you first have to delete the existing one with
+```
+openstack --os-cloud airun image delete airun-image
+```
 
 
 ## Deployment
 
+### Creating the stack
 Run the following command:
 ```sh
 openstack --os-cloud airun stack create -t heat/stack.yml --parameter instance_exists=true airun_stack
 ```
 
+To check the status of the stack creation:
+```sh
+openstack --os-cloud airun stack show airun_stack
+```
+
+### Accessing the instance
 To SSH into the instance:
 ```sh
 ssh -i ~/.ssh/id_airun debian@$(openstack --os-cloud airun stack output show --format value --column output_value airun_stack airun_instance_ip)
