@@ -23,11 +23,7 @@
     format = "qcow2";
     additionalSpace = "1024M";
     pkgs = import <nixpkgs> { inherit (pkgs) system; }; # ensure we use the regular qemu-kvm package
-    configFile = pkgs.writeText "configuration.nix" ''
-      {
-        imports = [ <./config.nix> ];
-      }
-    '';
+    configFile = pkgs.writeText "configuration.nix" (builtins.readFile ./config.nix);
   };
 }
 
