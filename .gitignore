@@ -1,3 +1,5 @@
+/nixpkgs*
+/pkgs*
 /result
 **/*.qcow2
 **/*.swp

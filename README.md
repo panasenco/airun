@@ -41,9 +41,21 @@ Note that activating GPU instances on Infomaniak can take about a week.
 ## Building the image
 
 ### NixOS
-Run the following command to build a generic OpenStack qcow2 image:
+
+#### Build the image from unstable NixOS
+If you're on the `unstable` NixOS channel, you'll likely not have prebuilt binary NVIDIA drivers and llama.cpp,
+which could take hours to build.
+You'll instead want to use the stable channel of nixpkgs:
 ```sh
-nix-build '<nixpkgs/nixos>' -A config.system.build.image --arg configuration "{ imports = [ ./nix/build.nix ]; }" 
+git clone --depth 1 --branch nixos-25.05 https://github.com/NixOS/nixpkgs.git pkgs-25.05
+nix-build -I nixpkgs=pkgs-25.05 '<nixpkgs/nixos>' -A config.system.build.image --arg configuration "{ imports = [ ./nix/build.nix ]; }"
+```
+
+#### Build the image from stable NixOS
+
+If you're already on the stable channel, simply run the following command to build a generic OpenStack qcow2 image:
+```sh
+nix-build '<nixpkgs/nixos>' -A config.system.build.image --arg configuration "{ imports = [ ./nix/build.nix ]; }"
 ```
 
 ### Testing the image locally
