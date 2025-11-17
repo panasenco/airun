@@ -102,16 +102,54 @@ openstack --os-cloud airun stack create -t heat/stack.yml --parameter instance_e
 To check the status of the stack creation:
 ```sh
 openstack --os-cloud airun stack show airun-stack
+openstack --os-cloud airun stack resource list airun-stack
 ```
 
 ### Accessing the instance
-To SSH into the instance:
+To SSH into the instance for development and debugging purposes:
 ```sh
 ssh -i ~/.ssh/id_airun root@$(openstack --os-cloud airun stack output show --format value --column output_value airun-stack airun_instance_ip)
 ```
 
 ### Running ollama
-After SSHing into the instance, you should be able to simply run:
+For development and debugging purposes, after SSHing into the instance, you should be able to simply run:
 ```sh
 ollama run gemma3
+```
+
+## Accessing ollama on the local machine
+
+### SSH Tunnel
+Create an SSH tunnel to expose the instance's Ollama API server on your local machine:
+```sh
+ssh -i ~/.ssh/id_airun -N -L 11434:localhost:11434 root@$(openstack --os-cloud airun stack output show --format value --column output_value airun-stack airun_instance_ip)
+```
+
+### Pulling a model
+Use the ollama API to pull a model without having to SSH into the server:
+```sh
+curl http://localhost:11434/api/pull -d '{"model": "gpt-oss"}'
+```
+
+### Configure aichat
+Add the following section into your ~/.config/aichat/config.yaml:
+```yaml
+clients:
+- api_base: http://localhost:11434/v1
+  api_key: ignored
+  models:
+  - name: gpt-oss
+  name: ollama
+  type: openai-compatible
+```
+
+Then run `aichat --model gpt-oss`
+
+## Teardown
+
+Ctrl+C out of the SSH tunnel.
+
+Run the following command to make sure the instance isn't using up your resources when you aren't using it.
+```sh
+openstack --os-cloud airun stack update -t heat/stack.yml --parameter instance_exists=false airun-stack
 ```
