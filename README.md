@@ -42,6 +42,8 @@ Note that activating GPU instances on Infomaniak can take about a week.
 
 ### NixOS
 
+Note that the first image build will take a very long time, but subsequent ones will use the Nix cache and will be a lot faster.
+
 #### Build the image from unstable NixOS
 If you're on the `unstable` NixOS channel, you'll likely not have prebuilt binary NVIDIA drivers and llama.cpp,
 which could take hours to build.
@@ -108,3 +110,8 @@ To SSH into the instance:
 ssh -i ~/.ssh/id_airun root@$(openstack --os-cloud airun stack output show --format value --column output_value airun-stack airun_instance_ip)
 ```
 
+### Running ollama
+After SSHing into the instance, you should be able to simply run:
+```sh
+ollama run gemma3
+```

@@ -17,6 +17,13 @@
     autoResize = true;
   };
 
+  fileSystems."/mnt/shared" = {
+    device = "/dev/vdb";
+    fsType = "ext4";
+    autoFormat = true;
+    options = [ "x-systemd.automount" "nofail" ];
+  };
+
   boot.growPartition = true;
   boot.kernelParams = [ "console=ttyS0,115200n8" ];
   boot.loader.grub.enable = true;
@@ -56,9 +63,10 @@
 
   # Install packages
   environment.systemPackages = with pkgs; [
-    (llama-cpp.override { cudaSupport = true; })
+    ollama-cuda
     pciutils
     vim
+    wget
   ];
 
   # Enable NVIDIA kernel module
@@ -76,4 +84,20 @@
     package = config.boot.kernelPackages.nvidiaPackages.stable;
   };
 
+  # Start the ollama server
+  systemd.services.ollama = {
+    description = "Ollama server";
+    after = [ "network.target" ];
+    wantedBy = [ "multi-user.target" ];
+    serviceConfig = {
+      ExecStart = "/run/current-system/sw/bin/ollama serve";
+      Restart = "on-failure";
+    };
+    environment = {
+      HOME = "/mnt/shared/ollama-home";
+    };
+  };
+
+  # Set system version
+  system.stateVersion = "25.05";
 }

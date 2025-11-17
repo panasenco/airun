@@ -51,6 +51,12 @@ resources:
           port_range_max: 22
           remote_ip_prefix: 0.0.0.0/0
 
+  airun_volume:
+    type: OS::Cinder::Volume
+    properties:
+      name: airun-volume
+      size: 128
+
   airun_instance:
     type: OS::Nova::Server
     condition: instance_exists
@@ -67,6 +73,15 @@ resources:
         - network: "ext-net1"
       security_groups:
         - get_resource: airun_security_group
+
+  airun_instance_attachment:
+    type: OS::Cinder::VolumeAttachment
+    properties:
+      instance_uuid:
+        get_resource: airun_instance
+      volume_id:
+        get_resource: airun_volume
+      mountpoint: /dev/vdb
 
 outputs:
   airun_instance_ip:
