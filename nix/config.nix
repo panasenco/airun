@@ -36,6 +36,12 @@
       settings.PasswordAuthentication = false;
     };
 
+    # Enable cloud-init
+    services.cloud-init = {
+      enable = true;
+      network.enable = true;
+    };
+
     # Enable the serial console on ttyS0
     systemd.services."serial-getty@ttyS0".enable = true;
 

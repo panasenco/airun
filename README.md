@@ -62,6 +62,8 @@ qemu-system-x86_64 -enable-kvm -cpu host -drive file=disk.qcow2,format=qcow2,if=
 
 When you see the message `[ OK ] Reacher target Multi-User System.`, type in `root` and hit Enter.
 
+Press Ctrl+A and then X to kill QEMU.
+
 ### Uploading the image
 ```sh
 openstack --os-cloud airun image create airun-image --container-format bare --disk-format qcow2 --file result/*.qcow2
@@ -80,17 +82,17 @@ openstack --os-cloud airun image delete airun-image
 ### Creating the stack
 Run the following command:
 ```sh
-openstack --os-cloud airun stack create -t heat/stack.yml --parameter instance_exists=true airun_stack
+openstack --os-cloud airun stack create -t heat/stack.yml --parameter instance_exists=true airun-stack
 ```
 
 To check the status of the stack creation:
 ```sh
-openstack --os-cloud airun stack show airun_stack
+openstack --os-cloud airun stack show airun-stack
 ```
 
 ### Accessing the instance
 To SSH into the instance:
 ```sh
-ssh -i ~/.ssh/id_airun debian@$(openstack --os-cloud airun stack output show --format value --column output_value airun_stack airun_instance_ip)
+ssh -i ~/.ssh/id_airun root@$(openstack --os-cloud airun stack output show --format value --column output_value airun-stack airun_instance_ip)
 ```
 
