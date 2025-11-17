@@ -42,19 +42,35 @@ Note that activating GPU instances on Infomaniak can take about a week.
 
 ### NixOS
 Run the following command to build a generic OpenStack qcow2 image:
-```
+```sh
 nix-build '<nixpkgs/nixos>' -A config.system.build.image --arg configuration "{ imports = [ ./nix/build.nix ]; }" 
 ```
 
-### Uploading the image
+### Testing the image locally
+You'll need `qemu` installed on your Linux PC to test the image locally.
+
+Copy the qcow2 image file to be able to change its permission mode.
+```sh
+cp result/*.qcow2 disk.qcow2
+chmod 644 disk.qcow2
 ```
+
+Then, test the image with the command:
+```sh
+qemu-system-x86_64 -enable-kvm -cpu host -drive file=disk.qcow2,format=qcow2,if=virtio -nographic
+```
+
+When you see the message `[ OK ] Reacher target Multi-User System.`, type in `root` and hit Enter.
+
+### Uploading the image
+```sh
 openstack --os-cloud airun image create airun-image --container-format bare --disk-format qcow2 --file result/*.qcow2
 ```
 Confirm the image's creation with `openstack --os-cloud airun image list --name airun-image`.
 
 ### Reuploading the image
 To upload the image again, you first have to delete the existing one with
-```
+```sh
 openstack --os-cloud airun image delete airun-image
 ```
 

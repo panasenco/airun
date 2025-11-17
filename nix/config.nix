@@ -13,13 +13,14 @@
 
   config = {
     fileSystems."/" = {
-      device = "/dev/disk/by-label/nixos";
+      device = "/dev/vda1";
       fsType = "ext4";
       autoResize = true;
     };
 
     boot.growPartition = true;
-    boot.kernelParams = [ "console=tty1" ];
+    boot.kernelParams = [ "console=ttyS0,115200n8" ];
+    boot.loader.grub.enable = true;
     boot.loader.grub.device = "/dev/vda";
     boot.loader.timeout = 1;
     boot.loader.grub.extraConfig = ''
@@ -35,7 +36,9 @@
       settings.PasswordAuthentication = false;
     };
 
-    # Enable the serial console on tty1
-    systemd.services."serial-getty@tty1".enable = true;
+    # Enable the serial console on ttyS0
+    systemd.services."serial-getty@ttyS0".enable = true;
+
+    users.users.root.initialHashedPassword = "";
   };
 }
