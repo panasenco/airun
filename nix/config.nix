@@ -45,6 +45,37 @@
     # Enable the serial console on ttyS0
     systemd.services."serial-getty@ttyS0".enable = true;
 
+    # For running locally with qemu
     users.users.root.initialHashedPassword = "";
+
+    # Networking
+    networking.useNetworkd = true;
+    networking.useDHCP = true;
+
+    # Enable unfree packages
+    nixpkgs.config.allowUnfree = true;
+
+    # Install packages
+    environment.systemPackages = with pkgs; [
+      (llama-cpp.override { cudaSupport = true; })
+      pciutils
+      vim
+    ];
+
+    # Enable NVIDIA kernel module
+    services.xserver.videoDrivers = [ "nvidia" ];
+
+    # Enable OpenGL
+    hardware.graphics.enable = true;
+
+    # NVIDIA-specific headless CUDA/OpenCL stubs
+    hardware.nvidia = {
+      modesetting.enable = false;
+      powerManagement.enable = false;
+      open = false; # use proprietary CUDA-supporting driver
+      nvidiaSettings = true;
+      package = config.boot.kernelPackages.nvidiaPackages.stable;
+    };
+
   };
 }
