@@ -2,4 +2,7 @@
 /pkgs*
 /result
 **/*.qcow2
+**/*.key
+**/*.pub
+**/*.hosts
 **/*.swp

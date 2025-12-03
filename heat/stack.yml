@@ -29,11 +29,6 @@ parameters:
     constraints:
     - allowed_pattern: "[a-zA-Z0-9-]+"
     default: "nvl4-a4-ram8-disk80-perf1"
-  key_name:
-    type: string
-    label: Key name
-    description: Name of the keypair to use for the instance
-    default: "airun_key"
 
 conditions:
   instance_exists:
@@ -63,8 +58,6 @@ resources:
     properties:
       name:
         get_param: instance_name
-      key_name:
-        get_param: key_name
       image:
         get_param: instance_image
       flavor:
@@ -89,7 +82,5 @@ outputs:
     condition: instance_exists
     description: IPv4 address of the airun instance
     value:
-      get_attr:
-        - airun_instance
-        - first_address
+      get_attr: [airun_instance, first_address]
 

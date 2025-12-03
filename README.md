@@ -26,15 +26,17 @@ Note that activating GPU instances on Infomaniak can take about a week.
     ```
     On Infomaniak, GPU flavors begin with `nv`.
 
+
 ## Manual setup
 1.  Generate an SSH keypair for access to your AI server instances.
     I recommend generating a new one so you can share it across devices.
     ```sh
-    ssh-keygen -f ~/.ssh/id_airun -t ed25519
+    ssh-keygen -f nix/id_airun_client.key -t ed25519 -N '' -C ''
     ```
-2.  [Upload the public key to OpenStack](https://docs.infomaniak.cloud/compute/key_pairs/) with:
+2.  Additionally, generate an SSH key for your server's fingerprint
     ```sh
-    openstack --os-cloud airun keypair create --public-key ~/.ssh/id_airun.pub airun_key
+    ssh-keygen -f nix/id_airun_server.key -t ed25519 -N '' -C ''
+    echo "* $(cat nix/id_airun_server.key.pub)" > airun.hosts
     ```
 
 
@@ -43,25 +45,16 @@ Note that activating GPU instances on Infomaniak can take about a week.
 ### NixOS
 
 Note that the first image build will take a very long time, but subsequent ones will use the Nix cache and will be a lot faster.
-
-#### Build the image from unstable NixOS
-If you're on the `unstable` NixOS channel, you'll likely not have prebuilt binary NVIDIA drivers and llama.cpp,
-which could take hours to build.
-You'll instead want to use the stable channel of nixpkgs:
-```sh
-git clone --depth 1 --branch nixos-25.05 https://github.com/NixOS/nixpkgs.git pkgs-25.05
-nix-build -I nixpkgs=pkgs-25.05 '<nixpkgs/nixos>' -A config.system.build.image --arg configuration "{ imports = [ ./nix/build.nix ]; }"
-```
-
-#### Build the image from stable NixOS
-
-If you're already on the stable channel, simply run the following command to build a generic OpenStack qcow2 image:
+Run the following command to build an OpenStack qcow2 image:
 ```sh
 nix-build '<nixpkgs/nixos>' -A config.system.build.image --arg configuration "{ imports = [ ./nix/build.nix ]; }"
 ```
 
 ### Testing the image locally
-You'll need `qemu` installed on your Linux PC to test the image locally.
+You'll need to uncomment the `users.users.root` section in `nix/configuration.nix` to be able to test the image locally.
+
+#### On Linux
+On a Linux machine, have `qemu` installed first.
 
 Copy the qcow2 image file to be able to change its permission mode.
 ```sh
@@ -71,16 +64,16 @@ chmod 644 disk.qcow2
 
 Then, test the image with the command:
 ```sh
-qemu-system-x86_64 -enable-kvm -cpu host -drive file=disk.qcow2,format=qcow2,if=virtio -nographic
+qemu-system-x86_64 -m 4G -enable-kvm -cpu host -drive file=disk.qcow2,format=qcow2,if=virtio -nographic
 ```
 
-When you see the message `[ OK ] Reacher target Multi-User System.`, type in `root` and hit Enter.
+When you see the prompt `nixos login:`, type in `root` and hit Enter.
 
-Press Ctrl+A and then X to kill QEMU.
+When finished testing, press Ctrl+A and then X to kill QEMU.
 
 ### Uploading the image
 ```sh
-openstack --os-cloud airun image create airun-image --container-format bare --disk-format qcow2 --file result/*.qcow2
+openstack --os-cloud airun image create --private airun-image --container-format bare --disk-format qcow2 --file result/*.qcow2
 ```
 Confirm the image's creation with `openstack --os-cloud airun image list --name airun-image`.
 
@@ -99,6 +92,12 @@ Run the following command:
 openstack --os-cloud airun stack create -t heat/stack.yml --parameter instance_exists=true airun-stack
 ```
 
+See the file heat/stack.yml for input parameters.
+For example, you can use a different instance flavor with:
+```sh
+openstack --os-cloud airun stack update -t heat/stack.yml --parameter instance_exists=true --parameter instance_flavor=a1-ram2-disk20-perf1 airun-stack
+```
+
 To check the status of the stack creation:
 ```sh
 openstack --os-cloud airun stack show airun-stack
@@ -106,15 +105,13 @@ openstack --os-cloud airun stack resource list airun-stack
 ```
 
 ### Accessing the instance
-To SSH into the instance for development and debugging purposes:
+For security reasons, SSH access to the instance is disabled by default.
+However, you can enable it by making some manual changes to `nix/configuration.nix`:
+1. Uncomment the `users.users.root` section.
+2. Comment out the `settings` section in `services.openssh`.
+Then you'll be able to SSH into the instance with:
 ```sh
-ssh -i ~/.ssh/id_airun root@$(openstack --os-cloud airun stack output show --format value --column output_value airun-stack airun_instance_ip)
-```
-
-### Running ollama
-For development and debugging purposes, after SSHing into the instance, you should be able to simply run:
-```sh
-ollama run gemma3
+ssh -i nix/id_airun_client.key -o StrictHostKeyChecking=yes -o UserKnownHostsFile=airun.hosts root@$(openstack --os-cloud airun stack output show --format value --column output_value airun-stack airun_instance_ip)
 ```
 
 ## Accessing ollama on the local machine
@@ -122,7 +119,7 @@ ollama run gemma3
 ### SSH Tunnel
 Create an SSH tunnel to expose the instance's Ollama API server on your local machine:
 ```sh
-ssh -i ~/.ssh/id_airun -N -L 11434:localhost:11434 root@$(openstack --os-cloud airun stack output show --format value --column output_value airun-stack airun_instance_ip)
+ssh -i nix/id_airun_client.key -o StrictHostKeyChecking=yes -o UserKnownHostsFile=airun.hosts -N -L 11434:localhost:11434 ollama_user@$(openstack --os-cloud airun stack output show --format value --column output_value airun-stack airun_instance_ip)
 ```
 
 ### Pulling a model
@@ -143,13 +140,13 @@ clients:
   type: openai-compatible
 ```
 
-Then run `aichat --model gpt-oss`
+Then run `aichat --model ollama:gpt-oss`
 
 ## Teardown
 
 Ctrl+C out of the SSH tunnel.
 
-Run the following command to make sure the instance isn't using up your resources when you aren't using it.
+Run the following command to make sure the instance isn't using up your $$ when you aren't using it.
 ```sh
 openstack --os-cloud airun stack update -t heat/stack.yml --parameter instance_exists=false airun-stack
 ```
