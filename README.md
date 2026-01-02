@@ -150,3 +150,11 @@ Run the following command to make sure the instance isn't using up your $$ when 
 ```sh
 openstack --os-cloud airun stack update -t heat/stack.yml --parameter instance_exists=false airun-stack
 ```
+
+### Delete everything
+
+To destroy all resources to prevent further billing:
+```sh
+openstack --os-cloud airun stack delete airun-stack
+openstack --os-cloud airun image delete airun-image
+```
